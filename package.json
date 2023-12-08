@@ -1,0 +1,24 @@
+{
+  "name": "spotify-ws",
+  "version": "1.0",
+  "description": "Get now-playing-song from Spotify with Websockets",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "serve": "pm2 start process.yml"
+  },
+  "author": "albert",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "tsc": "^2.0.4",
+    "typescript": "^5.3.3"
+  }
+}
