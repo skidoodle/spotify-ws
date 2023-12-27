@@ -33,6 +33,10 @@ services:
         restart: always
         ports:
             - '3000:3000'
+        environment:
+            - ENDPOINT=
+            #- HOST=
+            #- PORT=
 ```
 
 ## License
