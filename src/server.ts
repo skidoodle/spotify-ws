@@ -2,8 +2,11 @@ import * as http from 'http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import 'dotenv/config';
 
-const HOST = process.env.HOST;
-const PORT = process.env.PORT;
+// Mostly used for local development
+const HOST = process.env.HOST || 'http://localhost';
+const PORT = process.env.PORT || 3000;
+
+// Spotify nowplaying api endpoint (e.g https://albert.lol/api/spotify)
 const ENDPOINT = process.env.ENDPOINT;
 
 const server = http.createServer();
