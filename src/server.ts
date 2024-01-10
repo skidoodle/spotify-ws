@@ -1,4 +1,4 @@
-import http from 'http'
+import * as http from 'http'
 import { Server as SocketIOServer, Socket } from 'socket.io'
 import 'dotenv/config'
 
