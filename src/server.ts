@@ -40,15 +40,6 @@ function isEqual(obj1: any, obj2: any) {
   return JSON.stringify(obj1) === JSON.stringify(obj2)
 }
 
-// server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-//   if (req.url === '/') {
-//     res.writeHead(426, { 'Content-Type': 'text/plain' })
-//     res.end('Upgrade Required')
-//   } else {
-//     return
-//   }
-// })
-
 io.on('connection', (socket: Socket) => {
   if (previousData) {
     socket.emit('nowPlayingData', previousData)
