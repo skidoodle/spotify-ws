@@ -1,12 +1,9 @@
 import * as http from 'http'
-import { Server as SocketIOServer, Socket } from 'socket.io'
+import { Server as SocketIOServer, type Socket } from 'socket.io'
 import 'dotenv/config'
 
-// Mostly used for local development
-const HOST = process.env.HOST || 'http://localhost'
-const PORT = process.env.PORT || 3000
-
-// Spotify nowplaying api endpoint (e.g https://albert.lol/api/spotify)
+const HOST = process.env.HOST ?? 'http://localhost'
+const PORT = process.env.PORT ?? 3000
 const ENDPOINT = process.env.ENDPOINT
 
 const server = http.createServer()
@@ -16,12 +13,12 @@ const io = new SocketIOServer(server, {
   },
 })
 
-let previousData: any = null
+let previousData: string
 
 const sendNowPlayingData = async () => {
   try {
     const response = await fetch(`${ENDPOINT}`)
-    const data = await response.json()
+    const data = (await response.json()) as string
 
     if (data) {
       if (!isEqual(data, previousData)) {
@@ -36,9 +33,18 @@ const sendNowPlayingData = async () => {
   }
 }
 
-function isEqual(obj1: any, obj2: any) {
+function isEqual(obj1: string, obj2: string) {
   return JSON.stringify(obj1) === JSON.stringify(obj2)
 }
+
+server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
+  if (req.url === '/') {
+    res.writeHead(426, { 'Content-Type': 'text/plain' })
+    res.end('Upgrade Required')
+  } else {
+    return
+  }
+})
 
 io.on('connection', (socket: Socket) => {
   if (previousData) {
@@ -46,7 +52,9 @@ io.on('connection', (socket: Socket) => {
   }
 
   const intervalId = setInterval(() => {
-    sendNowPlayingData()
+    sendNowPlayingData().catch((err) => {
+      console.error('Error sending NowPlayingData:', err)
+    })
   }, 3000)
 
   socket.on('disconnect', () => {
