@@ -68,5 +68,7 @@ io.on('connection', (socket: Socket) => {
 })
 
 server.listen(PORT, () => {
-  console.log(`[SPOTIFY-WS] STARTED - ${HOST}:${PORT}`)
+  console.log(
+    `\u001b[1;32m[SPOTIFY-WS] STARTED \u001b[1;34m- \u001b[1;36m${HOST}:${PORT}`
+  )
 })
