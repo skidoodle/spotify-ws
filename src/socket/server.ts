@@ -38,9 +38,14 @@ const sendNowPlayingData = async () => {
       if (!isEqual(data, previousData)) {
         io.emit('nowPlayingData', data)
         previousData = data
+      } else {
+        io.emit('nowPlayingData', previousData)
       }
-    } else {
-      console.error('No song is currently playing')
+    } else if (!song || !song.is_playing) {
+      if (!isEqual(previousData, '{"is_playing":false}')) {
+        io.emit('nowPlayingData', '{"is_playing":false}')
+        previousData = '{"is_playing":false}'
+      }
     }
   } catch (error) {
     console.error('Error fetching song data:', error)
