@@ -7,36 +7,55 @@ It's important to note that this project does not purport to resolve the challen
 ## Running Locally
 
 ### With Docker
+
 ```
 git clone https://github.com/skidoodle/spotify-ws
 cd spotify-ws
 docker build -t spotify-ws:main .
-docker run -p 3000:3000 spotify-ws
+docker run -p 3000:3000 spotify-ws:main
 ```
 
 ### Without Docker
+
 ```
 git clone https://github.com/skidoodle/spotify-ws
 cd spotify-ws
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Deploying
 
-### Docker Compose
+### Docker compose
+
 ```
 version: '3.9'
 services:
     spotify-ws:
-        image: ghcr.io/skidoodle/spotify-ws:main
+        container_name: spotify-ws
+        image: 'ghcr.io/skidoodle/spotify-ws:main'
         restart: always
+        environment:
+            - REFRESH_TOKEN=
+            - CLIENT_SECRET=
+            - CLIENT_ID=
         ports:
             - '3000:3000'
-        environment:
-            - ENDPOINT=
-            #- HOST=
-            #- PORT=
+
+```
+
+### Docker run
+
+```
+docker run \
+  -d \
+  --name=spotify-ws \
+  --restart=always \
+  -p 3000:3000 \
+  -e CLIENT_ID= \
+  -e CLIENT_SECRET= \
+  -e REFRESH_TOKEN= \
+  ghcr.io/skidoodle/spotify-ws:main
 ```
 
 ## License
