@@ -6,24 +6,24 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "lint": "eslint --ext .ts src",
-    "build": "tsc",
     "serve": "pm2 start process.yml"
   },
   "author": "albert",
   "license": "AGPL-3.0",
   "dependencies": {
-    "dotenv": "^16.4.1",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4"
   },
   "devDependencies": {
-    "@types/eslint": "^8.56.2",
-    "@types/node": "^20.11.9",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "eslint": "^8.56.0",
-    "nodemon": "^3.0.3",
+    "@types/eslint": "^8.56.5",
+    "@types/node": "^20.11.26",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "tsc": "^2.0.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.2"
   }
 }

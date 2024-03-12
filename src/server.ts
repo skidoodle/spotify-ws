@@ -1,10 +1,11 @@
 import * as http from 'http'
 import { Server as SocketIOServer, type Socket } from 'socket.io'
+import axios from 'axios'
 import 'dotenv/config'
 
 const HOST = process.env.HOST ?? 'http://localhost'
 const PORT = process.env.PORT ?? 3000
-const ENDPOINT = process.env.ENDPOINT
+const ENDPOINT = process.env.ENDPOINT!
 
 const server = http.createServer()
 const io = new SocketIOServer(server, {
@@ -17,8 +18,8 @@ let previousData: string
 
 const sendNowPlayingData = async () => {
   try {
-    const response = await fetch(`${ENDPOINT}`)
-    const data = (await response.json()) as string
+    const response = await axios.get(ENDPOINT)
+    const data = response.data as string
 
     if (data) {
       if (!isEqual(data, previousData)) {
