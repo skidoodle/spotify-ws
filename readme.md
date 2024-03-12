@@ -41,7 +41,6 @@ services:
             - CLIENT_ID=
         ports:
             - '3000:3000'
-
 ```
 
 ### Docker run
