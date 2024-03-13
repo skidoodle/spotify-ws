@@ -24,8 +24,6 @@ const io = new SocketIOServer(server, {
   },
 })
 
-let previousData: string
-
 const spotify = new SpotifyService(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
 
 const sendNowPlayingData = async () => {
@@ -34,27 +32,18 @@ const sendNowPlayingData = async () => {
 
     if (song && song.is_playing) {
       const data = JSON.stringify(song)
-
-      if (!isEqual(data, previousData)) {
-        io.emit('nowPlayingData', data)
-        previousData = data
-      } else {
-        io.emit('nowPlayingData', previousData)
-      }
-    } else if (!song || !song.is_playing) {
-      if (!isEqual(previousData, '{"is_playing":false}')) {
-        io.emit('nowPlayingData', '{"is_playing":false}')
-        previousData = '{"is_playing":false}'
-      }
+      io.emit('nowPlayingData', data)
+      sendNowPlayingData.playing = true
+    } else if (sendNowPlayingData.playing) {
+      io.emit('nowPlayingData', null)
+      sendNowPlayingData.playing = false
     }
   } catch (error) {
     console.error('Error fetching song data:', error)
   }
 }
 
-function isEqual(obj1: string, obj2: string): boolean {
-  return JSON.stringify(obj1) === JSON.stringify(obj2)
-}
+sendNowPlayingData.playing = false
 
 server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
   if (req.url === '/') {
@@ -66,10 +55,6 @@ server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
 })
 
 io.on('connection', (socket: Socket) => {
-  if (previousData) {
-    socket.emit('nowPlayingData', previousData)
-  }
-
   const intervalId = setInterval(() => {
     sendNowPlayingData().catch((err) => {
       console.error('Error sending NowPlayingData:', err)

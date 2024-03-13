@@ -4,9 +4,9 @@ import type { SongResult, Item } from './types'
 
 export class SpotifyService {
   private accessToken: string | undefined
-  private clientId: string
-  private clientSecret: string
-  private refreshToken: string
+  private readonly clientId: string
+  private readonly clientSecret: string
+  private readonly refreshToken: string
 
   constructor(clientId: string, clientSecret: string, refreshToken: string) {
     this.clientId = clientId
