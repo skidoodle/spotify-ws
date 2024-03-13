@@ -24,7 +24,11 @@ const io = new SocketIOServer(server, {
   },
 })
 
-const spotify = new SpotifyService(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
+const spotify = new SpotifyService({
+  clientId: CLIENT_ID,
+  clientSecret: CLIENT_SECRET,
+  refreshToken: REFRESH_TOKEN,
+})
 
 const sendNowPlayingData = async () => {
   try {
@@ -54,7 +58,9 @@ server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
   }
 })
 
-io.on('connection', (socket: Socket) => {
+io.on('connection', async (socket: Socket) => {
+  await sendNowPlayingData()
+
   const intervalId = setInterval(() => {
     sendNowPlayingData().catch((err) => {
       console.error('Error sending NowPlayingData:', err)
