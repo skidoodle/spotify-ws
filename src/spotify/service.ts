@@ -7,11 +7,13 @@ export class SpotifyService {
   private readonly clientId: string
   private readonly clientSecret: string
   private readonly refreshToken: string
+  private readonly songResultMap: SongResultMap
 
   constructor(clientId: string, clientSecret: string, refreshToken: string) {
     this.clientId = clientId
     this.clientSecret = clientSecret
     this.refreshToken = refreshToken
+    this.songResultMap = new SongResultMap()
   }
 
   private hasAccessToken(): boolean {
@@ -58,8 +60,7 @@ export class SpotifyService {
           },
         }
       )
-
-      return SongResultMap.parseSong(response.data)
+      return SongResultMap.parseSong(response.data) as SongResult | undefined
     } catch (error) {
       await this.refreshAccessToken()
     }
