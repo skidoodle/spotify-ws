@@ -2,16 +2,18 @@ import axios, { type AxiosResponse } from 'axios'
 import { SongResultMap } from './result'
 import type { SongResult, Item } from './types'
 
-export class SpotifyService {
-  private accessToken: string | undefined
-  private readonly clientId: string
-  private readonly clientSecret: string
-  private readonly refreshToken: string
+interface SpotifyCredentials {
+  clientId: string
+  clientSecret: string
+  refreshToken: string
+}
 
-  constructor(clientId: string, clientSecret: string, refreshToken: string) {
-    this.clientId = clientId
-    this.clientSecret = clientSecret
-    this.refreshToken = refreshToken
+export class SpotifyService {
+  private readonly credentials: SpotifyCredentials
+  private accessToken?: string
+
+  constructor(credentials: SpotifyCredentials) {
+    this.credentials = credentials
   }
 
   private hasAccessToken(): boolean {
@@ -27,9 +29,9 @@ export class SpotifyService {
       const response: AxiosResponse<{ access_token: string }> =
         await axios.post('https://accounts.spotify.com/api/token', null, {
           params: {
-            client_id: this.clientId,
-            client_secret: this.clientSecret,
-            refresh_token: this.refreshToken,
+            client_id: this.credentials.clientId,
+            client_secret: this.credentials.clientSecret,
+            refresh_token: this.credentials.refreshToken,
             grant_type: 'refresh_token',
           },
         })
