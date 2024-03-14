@@ -49,8 +49,15 @@ const sendNowPlayingData = async () => {
 
 sendNowPlayingData.playing = false
 
-server.on('request', (_req: http.IncomingMessage, res: http.ServerResponse) => {
-  res.writeHead(426).end()
+server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
+  switch (req.url) {
+    case '/':
+      res.writeHead(200, { 'Content-Type': 'text/plain' })
+      res.end('github.com/skidoodle/spotify-ws')
+      break
+    default:
+      return
+  }
 })
 
 io.on('connection', async (socket: Socket) => {
