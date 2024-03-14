@@ -49,13 +49,8 @@ const sendNowPlayingData = async () => {
 
 sendNowPlayingData.playing = false
 
-server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-  if (req.url === '/') {
-    res.writeHead(426, { 'Content-Type': 'text/plain' })
-    res.end('Upgrade Required')
-  } else {
-    return
-  }
+server.on('request', (_req: http.IncomingMessage, res: http.ServerResponse) => {
+  res.writeHead(426).end()
 })
 
 io.on('connection', async (socket: Socket) => {
@@ -77,5 +72,5 @@ io.on('connection', async (socket: Socket) => {
 })
 
 server.listen(3000, () => {
-  console.log(`\u001b[1;32m[SPOTIFY-WS] \x1b[34mSTARTED ON PORT 3000`)
+  console.log(`\u001b[1;32m[SPOTIFY-WS] \x1b[34mSTARTED ON PORT 3000\x1b[0m\n`)
 })
