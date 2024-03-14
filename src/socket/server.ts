@@ -20,8 +20,10 @@ const { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } = {
 const server = http.createServer()
 const io = new SocketIOServer(server, {
   cors: {
-    origin: '*',
+    origin: ['http://localhost:3000', 'https://albert.lol'],
   },
+  path: '/',
+  transports: ['websocket'],
 })
 
 const spotify = new SpotifyService({
@@ -48,17 +50,6 @@ const sendNowPlayingData = async () => {
 }
 
 sendNowPlayingData.playing = false
-
-server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-  switch (req.url) {
-    case '/':
-      res.writeHead(200, { 'Content-Type': 'text/plain' })
-      res.end('github.com/skidoodle/spotify-ws')
-      break
-    default:
-      return
-  }
-})
 
 io.on('connection', async (socket: Socket) => {
   await sendNowPlayingData()
