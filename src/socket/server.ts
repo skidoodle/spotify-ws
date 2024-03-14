@@ -20,10 +20,9 @@ const { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } = {
 const server = http.createServer()
 const io = new SocketIOServer(server, {
   cors: {
-    origin: ['http://localhost:3000', 'https://albert.lol'],
+    origin: ['*'],
   },
   path: '/',
-  transports: ['websocket'],
 })
 
 const spotify = new SpotifyService({
