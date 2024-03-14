@@ -2,14 +2,18 @@
   "name": "spotify-ws",
   "version": "1.0",
   "description": "Get now-playing-song from Spotify with Websockets",
+  "author": "albert|skidoodle@gh",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "GitHub",
+    "url": "https://github.com/skidoodle/spotify-ws"
+  },
   "main": "src/index.ts",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "lint": "eslint --ext .ts src",
-    "serve": "pm2 start process.yml"
+    "serve": "ts-node src/index.ts"
   },
-  "author": "albert",
-  "license": "AGPL-3.0",
   "dependencies": {
     "axios": "^1.6.7",
     "dotenv": "^16.4.5",
@@ -22,7 +26,6 @@
     "eslint": "^8.57.0",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
-    "tsc": "^2.0.4",
     "typescript": "^5.4.2"
   }
 }
