@@ -20,7 +20,7 @@ const { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } = {
 const server = http.createServer()
 const io = new SocketIOServer(server, {
   cors: {
-    origin: ['*'],
+    origin: ['http://localhost:3000', 'https://albert.lol'],
   },
   path: '/',
 })
