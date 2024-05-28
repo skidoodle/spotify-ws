@@ -17,11 +17,18 @@ var (
 	clients       = make(map[*websocket.Conn]bool)          // Map to keep track of connected clients
 	broadcast     = make(chan *spotify.CurrentlyPlaying)    // Channel for broadcasting currently playing track
 	upgrader      = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
+		CheckOrigin: func(r *http.Request) bool { return true },    // Allow all origins
+		HandshakeTimeout: 10 * time.Second,						    // Timeout for WebSocket handshake
+		ReadBufferSize:  1024,									    // Buffer size for reading incoming messages
+		WriteBufferSize: 1024,							            // Buffer size for writing outgoing messages
+		Subprotocols:    []string{"binary"},				        // Supported subprotocols
+		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
+			log.Printf("Error upgrading WebSocket connection: %v", reason)
+		},
 	}
-	spotifyClient spotify.Client                             // Spotify API client
-	tokenSource   oauth2.TokenSource                         // OAuth2 token source
-	config        *oauth2.Config                             // OAuth2 configuration
+	spotifyClient spotify.Client        // Spotify API client
+	tokenSource   oauth2.TokenSource    // OAuth2 token source
+	config        *oauth2.Config          // OAuth2 configuration
 )
 
 func main() {
@@ -58,8 +65,8 @@ func main() {
 
 	// Log server start-up and initialize background tasks
 	log.Println("Server started on :3000")
-	go TrackFetcher()   // Periodically fetch currently playing track from Spotify
-	go MessageHandler() // Broadcast messages to connected clients
+	go TrackFetcher()     // Periodically fetch currently playing track from Spotify
+	go MessageHandler()   // Broadcast messages to connected clients
 
 	// Start the HTTP server
 	if err := http.ListenAndServe(":3000", nil); err != nil {
