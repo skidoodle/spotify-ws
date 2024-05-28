@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  spotify-ws:
+    image: ghcr.io/skidoodle/spotify-ws:main
+    container_name: spotify-ws
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REFRESH_TOKEN=
+      - CLIENT_SECRET=
+      - CLIENT_ID=
