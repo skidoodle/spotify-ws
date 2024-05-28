@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -14,21 +15,21 @@ import (
 )
 
 var (
-	clients       = make(map[*websocket.Conn]bool)          // Map to keep track of connected clients
-	broadcast     = make(chan *spotify.CurrentlyPlaying)    // Channel for broadcasting currently playing track
+	clients       = make(map[*websocket.Conn]bool)        // Map to keep track of connected clients
+	clientsMutex  sync.Mutex                              // Mutex to protect access to clients map
+	broadcast     = make(chan *spotify.CurrentlyPlaying)  // Channel for broadcasting currently playing track
+	connect       = make(chan *websocket.Conn)            // Channel for managing new connections
+	disconnect    = make(chan *websocket.Conn)            // Channel for managing client disconnections
 	upgrader      = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },    // Allow all origins
-		HandshakeTimeout: 10 * time.Second,						    // Timeout for WebSocket handshake
-		ReadBufferSize:  1024,									    // Buffer size for reading incoming messages
-		WriteBufferSize: 1024,							            // Buffer size for writing outgoing messages
-		Subprotocols:    []string{"binary"},				        // Supported subprotocols
-		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
-			log.Printf("Error upgrading WebSocket connection: %v", reason)
-		},
+		CheckOrigin: func(r *http.Request) bool { return true },  // Allow all origins
+		HandshakeTimeout: 10 * time.Second,                       // Timeout for WebSocket handshake
+		ReadBufferSize:  1024,                                    // Buffer size for reading incoming messages
+		WriteBufferSize: 1024,                                    // Buffer size for writing outgoing messages
+		Subprotocols:    []string{"binary"},                      // Supported subprotocols
 	}
-	spotifyClient spotify.Client        // Spotify API client
-	tokenSource   oauth2.TokenSource    // OAuth2 token source
-	config        *oauth2.Config          // OAuth2 configuration
+	spotifyClient spotify.Client       // Spotify API client
+	tokenSource   oauth2.TokenSource   // OAuth2 token source
+	config        *oauth2.Config         // OAuth2 configuration
 )
 
 func main() {
@@ -48,7 +49,6 @@ func main() {
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://accounts.spotify.com/authorize",
 			TokenURL: "https://accounts.spotify.com/api/token",
 		},
 	}
@@ -67,6 +67,7 @@ func main() {
 	log.Println("Server started on :3000")
 	go TrackFetcher()     // Periodically fetch currently playing track from Spotify
 	go MessageHandler()   // Broadcast messages to connected clients
+	go ConnectionManager() // Manage client connections
 
 	// Start the HTTP server
 	if err := http.ListenAndServe(":3000", nil); err != nil {
@@ -77,26 +78,25 @@ func main() {
 // ConnectionHandler upgrades HTTP connections to WebSocket and handles communication with clients
 func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-	defer ws.Close()
-	clients[ws] = true
+	if err != nil {return}
+	connect <- ws
+
+	defer func() {
+		disconnect <- ws
+		ws.Close()
+	}()
 
 	// Immediately send the current track to the newly connected client
 	currentTrack, err := spotifyClient.PlayerCurrentlyPlaying()
 	if err != nil {
 		log.Printf("Error getting currently playing track: %v", err)
-		ws.Close()
-		delete(clients, ws)
 		return
 	}
 
 	// Send the current track information to the client
 	err = ws.WriteJSON(currentTrack)
 	if err != nil {
-		ws.Close()
-		delete(clients, ws)
+		log.Printf("Error sending current track to client: %v", err)
 		return
 	}
 
@@ -104,16 +104,35 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
-			delete(clients, ws)
+			disconnect <- ws
 			break
+		}
+	}
+}
+
+// ConnectionManager manages client connections and disconnections using channels
+func ConnectionManager() {
+	for {
+		select {
+			case client := <-connect:
+				clientsMutex.Lock()
+				clients[client] = true
+				clientsMutex.Unlock()
+			case client := <-disconnect:
+				clientsMutex.Lock()
+				if _, ok := clients[client]; ok {
+					delete(clients, client)
+					client.Close()
+				}
+				clientsMutex.Unlock()
 		}
 	}
 }
 
 // MessageHandler continuously listens for messages on the broadcast channel and sends them to all connected clients
 func MessageHandler() {
-	for {
-		msg := <-broadcast
+	for msg := range broadcast {
+		clientsMutex.Lock()
 		for client := range clients {
 			err := client.WriteJSON(msg)
 			if err != nil {
@@ -121,11 +140,13 @@ func MessageHandler() {
 				delete(clients, client)
 			}
 		}
+		clientsMutex.Unlock()
 	}
 }
 
 // TrackFetcher periodically fetches the currently playing track from the Spotify API and broadcasts it to clients
 func TrackFetcher() {
+	var playing bool
 	for {
 		// Fetch the currently playing track
 		current, err := spotifyClient.PlayerCurrentlyPlaying()
@@ -145,9 +166,27 @@ func TrackFetcher() {
 			time.Sleep(30 * time.Minute)
 			continue
 		}
-		// Broadcast the current track information to all clients
-		broadcast <- current
-		// Fetch track information every 5 seconds
-		time.Sleep(5 * time.Second)
+
+		// Check if the track is playing
+		switch {
+			case current.Playing:
+				broadcast <- current
+				playing = true
+				// Send updates every 3 seconds while playing
+				for current.Playing {
+					time.Sleep(3 * time.Second)
+					current, err = spotifyClient.PlayerCurrentlyPlaying()
+					if err != nil {
+						log.Printf("Error getting currently playing track: %v", err)
+						break
+					}
+					broadcast <- current
+				}
+			case !current.Playing && playing:
+				playing = false
+			}
+
+		// Wait before checking again to avoid overwhelming the API
+		time.Sleep(3 * time.Second)
 	}
 }
