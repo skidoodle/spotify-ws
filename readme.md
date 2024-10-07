@@ -28,8 +28,7 @@ go run main.go
 
 ### Docker compose
 
-```
-version: '3.9'
+```yaml
 services:
     spotify-ws:
         container_name: spotify-ws
@@ -45,7 +44,7 @@ services:
 
 ### Docker run
 
-```
+```sh
 docker run \
   -d \
   --name=spotify-ws \
