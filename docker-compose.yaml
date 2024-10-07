@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   spotify-ws:
     image: ghcr.io/skidoodle/spotify-ws:main
