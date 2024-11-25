@@ -85,7 +85,10 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		disconnect <- ws
-		ws.Close()
+		err := ws.Close()
+		if err != nil {
+			return
+		}
 	}()
 
 	// Immediately send the current track to the newly connected client
@@ -124,7 +127,10 @@ func ConnectionManager() {
 			clientsMutex.Lock()
 			if _, ok := clients[client]; ok {
 				delete(clients, client)
-				client.Close()
+				err := client.Close()
+				if err != nil {
+					return
+				}
 			}
 			clientsMutex.Unlock()
 		}
@@ -138,7 +144,10 @@ func MessageHandler() {
 		for client := range clients {
 			err := client.WriteJSON(msg)
 			if err != nil {
-				client.Close()
+				err := client.Close()
+				if err != nil {
+					return
+				}
 				delete(clients, client)
 			}
 		}
