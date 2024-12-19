@@ -9,3 +9,4 @@ services:
       - REFRESH_TOKEN=
       - CLIENT_SECRET=
       - CLIENT_ID=
+      #- LOG_LEVEL=DEBUG

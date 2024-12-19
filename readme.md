@@ -8,7 +8,7 @@ It's important to note that this project does not purport to resolve the challen
 
 ### With Docker
 
-```
+```sh
 git clone https://github.com/skidoodle/spotify-ws
 cd spotify-ws
 docker build -t spotify-ws:main .
@@ -17,7 +17,7 @@ docker run -p 3000:3000 spotify-ws:main
 
 ### Without Docker
 
-```
+```sh
 git clone https://github.com/skidoodle/spotify-ws
 cd spotify-ws
 go get
@@ -38,6 +38,7 @@ services:
             - REFRESH_TOKEN=
             - CLIENT_SECRET=
             - CLIENT_ID=
+            #- LOG_LEVEL=debug
         ports:
             - '3000:3000'
 ```
@@ -53,6 +54,7 @@ docker run \
   -e CLIENT_ID= \
   -e CLIENT_SECRET= \
   -e REFRESH_TOKEN= \
+  #-e LOG_LEVEL=DEBUG \
   ghcr.io/skidoodle/spotify-ws:main
 ```
 
