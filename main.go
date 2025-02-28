@@ -159,6 +159,8 @@ func initializeSpotifyClient() {
 
 	tokenSource = oauthConfig.TokenSource(context.Background(), token)
 	spotifyClient = spotify.NewClient(oauth2.NewClient(context.Background(), tokenSource))
+
+	logrus.Info("Spotify client initialized successfully")
 }
 
 func startServer(server *http.Server, _ context.Context) {
@@ -269,11 +271,14 @@ func sendInitialState(client *websocket.Conn) {
 	lastState.RLock()
 	defer lastState.RUnlock()
 
-	if lastState.track != nil {
-		if err := client.WriteJSON(lastState.track); err != nil {
-			logrus.Errorf("Failed to send initial state: %v", err)
-			client.Close()
-		}
+	if lastState.track == nil {
+		logrus.Debug("No initial state available to send")
+		return
+	}
+
+	if err := client.WriteJSON(lastState.track); err != nil {
+		logrus.Errorf("Failed to send initial state: %v", err)
+		client.Close()
 	}
 }
 
@@ -323,6 +328,8 @@ func fetchAndBroadcastState() {
 		return
 	}
 
+	logrus.Debugf("Fetched playback state: %+v", current)
+
 	updateState(current)
 }
 
@@ -331,10 +338,16 @@ func updateState(current *spotify.CurrentlyPlaying) {
 	defer lastState.Unlock()
 
 	if current == nil {
+		logrus.Warn("Received nil playback state from Spotify")
 		return
 	}
 
-	stateChanged := lastState.track == nil ||
+	if lastState.track == nil {
+		lastState.track = &spotify.CurrentlyPlaying{}
+	}
+
+	stateChanged := lastState.track.Item == nil ||
+		current.Item == nil ||
 		lastState.track.Item.ID != current.Item.ID ||
 		lastState.playing != current.Playing
 

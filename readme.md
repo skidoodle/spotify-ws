@@ -39,7 +39,7 @@ services:
       - REFRESH_TOKEN=${REFRESH_TOKEN}
       - CLIENT_SECRET=${CLIENT_SECRET}
       - CLIENT_ID=${CLIENT_ID}
-      #- LOG_LEVEL=DEBUG
+      #- LOG_LEVEL=DEBUG|WARN|ERROR
       #- ALLOWED_ORIGINS=http://localhost:3000
       #- SERVER_PORT=3000
 ```
