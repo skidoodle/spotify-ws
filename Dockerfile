@@ -5,7 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN go build -ldflags="-s -w" -o spotify-ws .
-RUN go build -ldflags="-s -w" -o healthcheck healthcheck.go
+RUN go build -ldflags="-s -w" -o healthcheck ./healthcheck/healthcheck.go
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /app
