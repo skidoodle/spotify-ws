@@ -20,7 +20,6 @@ docker run -p 3000:3000 spotify-ws:main
 ```sh
 git clone https://github.com/skidoodle/spotify-ws
 cd spotify-ws
-go get
 go run main.go
 ```
 
@@ -30,17 +29,19 @@ go run main.go
 
 ```yaml
 services:
-    spotify-ws:
-        container_name: spotify-ws
-        image: 'ghcr.io/skidoodle/spotify-ws:main'
-        restart: unless-stopped
-        environment:
-            - REFRESH_TOKEN=
-            - CLIENT_SECRET=
-            - CLIENT_ID=
-            #- LOG_LEVEL=debug
-        ports:
-            - '3000:3000'
+  spotify-ws:
+    image: ghcr.io/skidoodle/spotify-ws:main
+    container_name: spotify-ws
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REFRESH_TOKEN=${REFRESH_TOKEN}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - CLIENT_ID=${CLIENT_ID}
+      #- LOG_LEVEL=DEBUG
+      #- ALLOWED_ORIGINS=http://localhost:3000
+      #- SERVER_PORT=3000
 ```
 
 ### Docker run
@@ -51,10 +52,9 @@ docker run \
   --name=spotify-ws \
   --restart=unless-stopped \
   -p 3000:3000 \
-  -e CLIENT_ID= \
-  -e CLIENT_SECRET= \
-  -e REFRESH_TOKEN= \
-  #-e LOG_LEVEL=DEBUG \
+  -e CLIENT_ID=${CLIENT_ID} \
+  -e CLIENT_SECRET=${CLIENT_SECRET} \
+  -e REFRESH_TOKEN=${REFRESH_TOKEN} \
   ghcr.io/skidoodle/spotify-ws:main
 ```
 
