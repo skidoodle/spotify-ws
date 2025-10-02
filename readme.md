@@ -42,6 +42,7 @@ services:
       #- LOG_LEVEL=DEBUG|WARN|ERROR
       #- ALLOWED_ORIGINS=http://localhost:3000
       #- SERVER_PORT=3000
+      #- RT=true
 ```
 
 ### Docker run

@@ -14,3 +14,4 @@ services:
       #- LOG_LEVEL=DEBUG
       #- ALLOWED_ORIGINS=http://localhost:3000
       #- SERVER_PORT=3000
+      #- RT=true
