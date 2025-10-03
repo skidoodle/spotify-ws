@@ -7,34 +7,23 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// newWebsocketHandler creates a new WebSocket handler closure.
+// newWebsocketHandler creates the handler that upgrades connections.
 func (s *Server) newWebsocketHandler() websocket.Handler {
 	return func(ws *websocket.Conn) {
-		defer func() {
-			s.hub.unregister <- ws
-			if err := ws.Close(); err != nil {
-				slog.Warn("error while closing websocket connection", "error", err, "remoteAddr", ws.RemoteAddr())
-			}
-		}()
-
 		origin := ws.Config().Origin.String()
 		if !s.originChecker(origin) {
 			slog.Warn("origin not allowed, rejecting connection", "origin", origin)
 			return
 		}
 
-		s.hub.register <- ws
+		slog.Debug("client connected, upgrading connection", "remoteAddr", ws.RemoteAddr())
 
-		// Send the last known state immediately upon connection.
-		s.poller.SendLastState(ws)
+		client := &Client{hub: s.hub, conn: ws, send: make(chan []byte, 256)}
 
-		// Block by reading from the client to detect disconnection.
-		var msg string
-		for {
-			if err := websocket.Message.Receive(ws, &msg); err != nil {
-				break // Client has disconnected.
-			}
-		}
+		client.hub.register <- client
+
+		go client.writePump()
+		client.readPump()
 	}
 }
 

@@ -5,14 +5,14 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"spotify-ws/internal/spotify"
 )
 
-// Server is the main application orchestrator. It owns all components
-// and manages the application's lifecycle.
+// Server is the main application orchestrator.
 type Server struct {
 	addr          string
 	httpServer    *http.Server
@@ -23,13 +23,12 @@ type Server struct {
 
 // NewServer creates a new, fully configured WebSocket server.
 func NewServer(addr string, allowedOrigins []string, spotifyClient *spotify.Client, realtime bool) *Server {
-	hub := NewHub(realtime)
-	poller := NewPoller(spotifyClient, hub)
+	hub := NewHub()
+	poller := NewPoller(spotifyClient, hub, realtime)
 
-	// Create a closure for origin checking to keep the Server's dependencies clean.
 	originChecker := func(origin string) bool {
 		if len(allowedOrigins) == 0 {
-			return true // Allow all if not specified.
+			return true
 		}
 		for _, allowedOrigin := range allowedOrigins {
 			if allowedOrigin == origin {
@@ -47,15 +46,32 @@ func NewServer(addr string, allowedOrigins []string, spotifyClient *spotify.Clie
 	}
 }
 
-// Run starts the server and its components. It blocks until the context is
-// canceled and all components have shut down gracefully.
+// Run starts the server and its components.
 func (s *Server) Run(ctx context.Context) error {
-	// Do an initial state fetch before starting the server.
-	s.poller.UpdateState(ctx)
-
 	mux := http.NewServeMux()
-	mux.Handle("/", s.newWebsocketHandler())
+	wsHandler := s.newWebsocketHandler()
+
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		isWebSocket := r.Header.Get("Upgrade") == "websocket" &&
+			strings.Contains(strings.ToLower(r.Header.Get("Connection")), "upgrade")
+
+		if isWebSocket {
+			wsHandler.ServeHTTP(w, r)
+			return
+		}
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Upgrade", "websocket")
+		w.Header().Set("Connection", "Upgrade")
+		w.Header().Set("X-Source", "github.com/skidoodle/spotify-ws")
+		w.WriteHeader(http.StatusUpgradeRequired)
+		if _, err := w.Write([]byte("426 Upgrade Required (github.com/skidoodle/spotify-ws)")); err != nil {
+			slog.Warn("failed to write upgrade required response", "error", err)
+		}
+	})
 
 	s.httpServer = &http.Server{
 		Addr:    s.addr,
@@ -63,7 +79,7 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(2) // For the hub and the poller.
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -75,32 +91,24 @@ func (s *Server) Run(ctx context.Context) error {
 		s.poller.Run(ctx)
 	}()
 
-	// Start the HTTP server.
 	go func() {
-		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("http server error", "error", err)
+		<-ctx.Done()
+		slog.Info("shutdown signal received, stopping http server")
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
+			slog.Error("http server shutdown error", "error", err)
 		}
 	}()
 
-	// Wait for shutdown signal.
-	<-ctx.Done()
-	slog.Info("shutdown signal received")
+	slog.Info("http server listening", "addr", s.addr)
+	if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
 
-	// The hub and poller will stop automatically via the context.
-	// We just need to shut down the HTTP server and wait for goroutines to finish.
-	s.shutdown()
 	wg.Wait()
 
 	return nil
-}
-
-// shutdown gracefully shuts down the HTTP server.
-func (s *Server) shutdown() {
-	slog.Info("shutting down http server")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
-		slog.Error("http server shutdown error", "error", err)
-	}
 }

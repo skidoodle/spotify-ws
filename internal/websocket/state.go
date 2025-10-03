@@ -2,8 +2,7 @@ package websocket
 
 import "spotify-ws/internal/spotify"
 
-// PlaybackState is the client-facing data structure. It conditionally omits
-// real-time data fields from JSON based on the server's mode.
+// PlaybackState is the client-facing data structure.
 type PlaybackState struct {
 	IsPlaying  bool               `json:"is_playing"`
 	ProgressMs int                `json:"progress_ms,omitempty"`
@@ -12,7 +11,6 @@ type PlaybackState struct {
 }
 
 // newPlaybackState creates a client-facing PlaybackState from the internal Spotify data.
-// It includes progress data only if the server is in real-time mode.
 func newPlaybackState(data *spotify.CurrentlyPlaying, realtime bool) PlaybackState {
 	if data == nil {
 		return PlaybackState{IsPlaying: false}
