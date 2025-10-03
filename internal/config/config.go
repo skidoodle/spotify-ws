@@ -31,9 +31,9 @@ func Load() (*Config, error) {
 
 	cfg := &Config{}
 
-	cfg.Spotify.ClientID = os.Getenv("SPOTIFY_CLIENT_ID")
-	cfg.Spotify.ClientSecret = os.Getenv("SPOTIFY_CLIENT_SECRET")
-	cfg.Spotify.RefreshToken = os.Getenv("SPOTIFY_REFRESH_TOKEN")
+	cfg.Spotify.ClientID = os.Getenv("CLIENT_ID")
+	cfg.Spotify.ClientSecret = os.Getenv("CLIENT_SECRET")
+	cfg.Spotify.RefreshToken = os.Getenv("REFRESH_TOKEN")
 
 	if cfg.Spotify.ClientID == "" || cfg.Spotify.ClientSecret == "" || cfg.Spotify.RefreshToken == "" {
 		return nil, fmt.Errorf("spotify credentials are not set")
