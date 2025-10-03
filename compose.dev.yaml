@@ -1,0 +1,11 @@
+services:
+  spotify-ws:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spotify-ws
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+        - .env
